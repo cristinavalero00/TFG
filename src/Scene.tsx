@@ -10,6 +10,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { Item, Project } from "./model";
+import { layerElevations } from "./composition";
+import { createResizeOverlay } from "./resize";
+import { materialsReady, onPaintReady, paintedMaterial } from "./painted";
 export type SceneAPI = {
   capture: (view: "top" | "current", includeGuides: boolean) => string;
   zoom: (delta: number) => void;
@@ -27,6 +30,7 @@ type Props = {
   onChange: (id: string, patch: Partial<Item>) => void;
   onAdd: (kind: string, x: number, z: number) => void;
   onCamera: (zoom: number, az: number, inc: number) => void;
+  onMaterialsReady: (ready: boolean) => void;
 };
 function material(color: string, roughness = 0.82) {
   return new T.MeshStandardMaterial({ color, roughness });
@@ -71,30 +75,16 @@ function cylinder(
 ) {
   return mesh(new T.CylinderGeometry(r, r, h, 48), m, parent, x, y, z);
 }
-function food(i: Item) {
+function food(i: Item, elevation = i.elevation) {
   const g = new T.Group();
-  const main = material(i.color),
+  const main = paintedMaterial(i.kind, i.color) ?? material(i.color),
     dark = material(new T.Color(i.color).multiplyScalar(0.69).getStyle());
   const pale = material("#edf0c1");
   switch (i.kind) {
     case "zucchini":
-      cylinder(g, main, 20, 10);
-      cylinder(g, material("#c9d991"), 17.2, 0.5, 0, 10.25);
-      cylinder(g, pale, 14.8, 0.5, 0, 10.55);
-      for (let n = 0; n < 6; n++) {
-        let a = (n * Math.PI) / 3;
-        const s = sphere(
-          g,
-          material("#adbf79"),
-          Math.sin(a) * 6,
-          11,
-          Math.cos(a) * 6,
-          1,
-          0.4,
-          2.1,
-        );
-        s.rotation.y = -a;
-      }
+      cylinder(g, material(i.color), 20, 10);
+      cylinder(g, material("#c9d991"), 18.1, 0.5, 0, 10.25);
+      cylinder(g, paintedMaterial("zucchini", i.color)!, 17.6, 0.3, 0, 10.7);
       break;
     case "carrot": {
       const a = mesh(
@@ -128,19 +118,6 @@ function food(i: Item) {
         [0, 18, 9, 10],
       ]) {
         sphere(g, main, x, y, z, r, r * 0.85, r);
-        for (let n = 0; n < 4; n++) {
-          const a = n * 1.7;
-          sphere(
-            g,
-            n % 2 ? dark : material("#86a454"),
-            x + Math.sin(a) * r * 0.5,
-            y + r * 0.7,
-            z + Math.cos(a) * r * 0.5,
-            2.4,
-            2.2,
-            2.4,
-          );
-        }
       }
       break;
     }
@@ -288,9 +265,12 @@ function food(i: Item) {
   g.scale.set(
     i.width / size.x,
     i.thickness / size.y,
-    ((i.flip ? -1 : 1) * i.width) / size.x,
+    (i.flip ? -1 : 1) *
+      (i.depth === undefined ? i.width / size.x : i.depth / size.z),
   );
-  g.position.set(i.x, 6 + i.elevation, i.z);
+  g.userData.localWidth = i.width;
+  g.userData.localDepth = i.depth ?? (i.width * size.z) / size.x;
+  g.position.set(i.x, 6 + elevation, i.z);
   g.rotation.y = (-i.rotation * Math.PI) / 180;
   g.visible = !i.hidden;
   g.userData.itemId = i.id;
@@ -564,10 +544,27 @@ export const Scene = forwardRef<SceneAPI, Props>(function Scene(props, ref) {
     transform.setSize(0.7);
     const gizmo = transform.getHelper();
     scene.add(gizmo);
+    let resizeOverlay: ReturnType<typeof createResizeOverlay> | undefined;
+    let lastMaterialsReady: boolean | undefined;
     const render = () => {
+      const ready = materialsReady();
+      if (ready !== lastMaterialsReady) {
+        lastMaterialsReady = ready;
+        latest.current.onMaterialsReady(ready);
+      }
+      scene.updateMatrixWorld(true);
       selection?.update();
+      if (selection)
+        selection.visible =
+          latest.current.view !== "top" ||
+          latest.current.tool === "rotate" ||
+          !!latest.current.project.items.find(
+            (i) => i.id === latest.current.selected,
+          )?.locked;
+      resizeOverlay?.update();
       renderer.render(scene, camera);
     };
+    const unsubscribePaint = onPaintReady(render);
     const report = () => {
       render();
       latest.current.onCamera(
@@ -743,6 +740,34 @@ export const Scene = forwardRef<SceneAPI, Props>(function Scene(props, ref) {
     const observer = new ResizeObserver(resize);
     observer.observe(el);
     resize();
+    resizeOverlay = createResizeOverlay({
+      host: el,
+      canvas: renderer.domElement,
+      camera,
+      getItem: () =>
+        latest.current.project.items.find(
+          (i) => i.id === latest.current.selected,
+        ),
+      getObject: () =>
+        items.children.find(
+          (o) => o.userData.itemId === latest.current.selected,
+        ),
+      isEnabled: () =>
+        latest.current.view === "top" &&
+        latest.current.tool !== "rotate" &&
+        !!latest.current.selected &&
+        !latest.current.project.items.find(
+          (i) => i.id === latest.current.selected,
+        )?.locked &&
+        !latest.current.project.items.find(
+          (i) => i.id === latest.current.selected,
+        )?.hidden,
+      onCommit: (id, patch) => latest.current.onChange(id, patch),
+      render,
+      setOrbit: (enabled) => {
+        controls.enabled = enabled;
+      },
+    });
     const update = (p: Props) => {
       transform.detach();
       if (selection) {
@@ -760,8 +785,12 @@ export const Scene = forwardRef<SceneAPI, Props>(function Scene(props, ref) {
       dish = plate(p.project);
       guides = guideObject(p.guide);
       scene.add(dish, guides);
+      const elevations = layerElevations(
+        p.project.items,
+        !!p.project.layerStacking,
+      );
       for (const i of p.project.items) {
-        const obj = food(i);
+        const obj = food(i, elevations.get(i.id));
         obj.userData.initialScaleX = obj.scale.x;
         items.add(obj);
       }
@@ -771,12 +800,13 @@ export const Scene = forwardRef<SceneAPI, Props>(function Scene(props, ref) {
       const data = p.project.items.find((i) => i.id === p.selected);
       if (selected && data && !data.hidden) {
         selection = new T.BoxHelper(selected, "#b8431f");
+        selection.visible = p.view !== "top" || p.tool === "rotate";
         selection.material.depthTest = false;
         selection.renderOrder = 20;
         scene.add(selection);
-        if (p.tool !== "move" && !data.locked) {
-          transform.setMode(p.tool === "rotate" ? "rotate" : "scale");
-          transform.showX = p.tool === "scale";
+        if (p.tool === "rotate" && !data.locked) {
+          transform.setMode("rotate");
+          transform.showX = false;
           transform.showY = p.tool === "rotate";
           transform.showZ = false;
           transform.attach(selected);
@@ -880,6 +910,8 @@ export const Scene = forwardRef<SceneAPI, Props>(function Scene(props, ref) {
       angles,
       destroy: () => {
         observer.disconnect();
+        resizeOverlay?.destroy();
+        unsubscribePaint();
         window.removeEventListener("keydown", key);
         controls.dispose();
         transform.dispose();

@@ -1,3 +1,4 @@
+import { itemDepth } from "./composition";
 export type Item = {
   id: string;
   kind: string;
@@ -5,6 +6,7 @@ export type Item = {
   x: number;
   z: number;
   width: number;
+  depth?: number;
   rotation: number;
   thickness: number;
   elevation: number;
@@ -23,6 +25,7 @@ export type Project = {
   notes: string;
   updated: string;
   thumbnail?: string;
+  layerStacking?: boolean;
 };
 export type Resource = {
   kind: string;
@@ -241,6 +244,7 @@ export function newProject(): Project {
     plate: "round",
     plateColor: "#fffaf0",
     items: [],
+    layerStacking: true,
     notes: "",
     updated: new Date().toISOString(),
   };
@@ -255,6 +259,7 @@ export function newItem(kind: string, x = 0, z = 0): Item {
     x,
     z,
     width: r.width,
+    depth: itemDepth({ kind, width: r.width }),
     thickness: r.thickness,
     rotation: 0,
     elevation: 0,
@@ -285,6 +290,7 @@ export const fingerprint = (p: Project) =>
     plateColor: p.plateColor,
     items: p.items,
     notes: p.notes,
+    layerStacking: p.layerStacking,
   });
 export const STORAGE = "mise-en-place.projects.v1";
 const number = (x: unknown) => typeof x === "number" && Number.isFinite(x);
@@ -299,6 +305,7 @@ export function isProject(x: unknown): x is Project {
     typeof p.updated === "string" &&
     plates.some((t) => t.id === p.plate) &&
     /^#[0-9a-f]{6}$/i.test(p.plateColor) &&
+    (p.layerStacking === undefined || typeof p.layerStacking === "boolean") &&
     Array.isArray(p.items) &&
     p.items.every(
       (i) =>
@@ -319,6 +326,8 @@ export function isProject(x: unknown): x is Project {
         Math.abs(i.z) <= 1000 &&
         i.width >= 1 &&
         i.width <= 300 &&
+        (i.depth === undefined ||
+          (number(i.depth) && i.depth >= 2 && i.depth <= 300)) &&
         i.thickness >= 0.2 &&
         i.thickness <= 120 &&
         i.elevation >= 0 &&

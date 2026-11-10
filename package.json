@@ -1,13 +1,13 @@
 {
   "name": "mise-en-place",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --import tsx tests/model.test.ts"
+    "test": "node --import tsx tests/model.test.ts && node --import tsx tests/interactions.test.ts"
   },
   "dependencies": {
     "@fontsource/dm-serif-display": "^5.2.7",

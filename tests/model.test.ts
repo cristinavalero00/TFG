@@ -83,3 +83,11 @@ test("el estado visual ajeno al proyecto no modifica su huella editable", () => 
   );
   assert.notEqual(fingerprint(p), fingerprint({ ...p, notes: "Nueva nota" }));
 });
+
+test("cargas anteriores sin fondo ni modo de apilado mantienen sus datos", () => {
+  const p = demoProject();
+  delete p.layerStacking;
+  p.items.forEach((i) => delete i.depth);
+  const raw = JSON.stringify([p]);
+  assert.deepEqual(readProjects({ getItem: () => raw }), [p]);
+});

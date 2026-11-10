@@ -1,3 +1,5 @@
+import { itemDepth, reorderLayer } from "./composition";
+import { ColorAnalysis } from "./ColorAnalysis";
 import {
   lazy,
   Suspense,
@@ -10,6 +12,10 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUp,
+  ChevronsDown,
   Plus,
   Search,
   Undo2,
@@ -272,6 +278,7 @@ export default function App() {
     [exporting, setExporting] = useState(false),
     [exportError, setExportError] = useState("");
   const scene = useRef<SceneAPI>(null);
+  const [paintReady, setPaintReady] = useState(true);
   const latest = useRef({ project, dirty, selected, dialog, drawer, page });
   latest.current = { project, dirty, selected, dialog, drawer, page };
   const notify = (message: string, error = false) =>
@@ -539,13 +546,18 @@ export default function App() {
   });
   useEffect(() => {
     if (dialog !== "export" || !project) return;
+    if (!paintReady) {
+      setPreview("");
+      setExportError("");
+      return;
+    }
     try {
       setPreview(scene.current?.capture(exportView, includeGuides) || "");
       setExportError("");
     } catch {
       setExportError("No se ha podido generar la vista previa.");
     }
-  }, [dialog, exportView, includeGuides, project]);
+  }, [dialog, exportView, includeGuides, project, paintReady]);
   const openExport = () => {
     setFormat("pdf");
     setExportView("top");
@@ -708,45 +720,7 @@ export default function App() {
       )}
     </header>
   );
-  const colorContent = (
-    <div className="color-guide">
-      <h3>Relaciones cromáticas</h3>
-      <p>
-        Observa cómo se relacionan los colores de los ingredientes. Estos
-        ejemplos son orientativos y no cambian tu composición.
-      </p>
-      <div
-        className="color-wheel"
-        role="img"
-        aria-label="Rueda cromática de doce colores"
-      >
-        <span />
-      </div>
-      <h4>Colores análogos</h4>
-      <p>
-        Se sitúan próximos en la rueda. Permiten explorar composiciones de tonos
-        afines.
-      </p>
-      <div className="color-swatches">
-        {["#ee9a28", "#e7c63e", "#b9c843"].map((c) => (
-          <span key={c} style={{ background: c }} />
-        ))}
-      </div>
-      <h4>Colores complementarios</h4>
-      <p>
-        Ocupan posiciones opuestas. Su contraste puede destacar un elemento.
-      </p>
-      <div className="color-swatches">
-        {["#d74a36", "#369457"].map((c) => (
-          <span key={c} style={{ background: c }} />
-        ))}
-      </div>
-      <p className="caption">
-        La percepción depende también de la vajilla, la iluminación y los
-        materiales.
-      </p>
-    </div>
-  );
+  const colorContent = <ColorAnalysis project={project} selected={item} />;
   const helpContent = (
     <>
       {helpTopic === 0 ? (
@@ -804,7 +778,7 @@ export default function App() {
           <h2>Ajusta cada elemento</h2>
           <p>
             Selecciona en el plato o en Capas. Arrastra para mover; usa los
-            campos para ajustar ancho, rotación, grosor, elevación y opacidad.
+            campos para ajustar ancho, fondo, rotación, grosor, elevación y opacidad.
             El color modifica el material principal, conservando detalles del
             alimento.
           </p>
@@ -1363,6 +1337,7 @@ export default function App() {
                   onSelect={setSelected}
                   onChange={patchItem}
                   onAdd={add}
+                  onMaterialsReady={setPaintReady}
                   onCamera={(z, a, i) => {
                     setZoom(z);
                     if (view === "perspective") {
@@ -1512,7 +1487,7 @@ export default function App() {
                 {view === "perspective"
                   ? "Arrastra el fondo para girar la vista"
                   : selected
-                    ? "Arrastra para mover · Flechas para ajustar"
+                    ? "Esquinas: escala · Lados: estira · Mayús: libre"
                     : "Selecciona un ingrediente para ajustarlo"}
               </div>
             </main>
@@ -1542,7 +1517,21 @@ export default function App() {
                         max={300}
                         unit="mm"
                         disabled={item.locked}
-                        onCommit={(v) => patchItem(item.id, { width: v })}
+                        onCommit={(v) =>
+                          patchItem(item.id, {
+                            width: v,
+                            depth: itemDepth(item),
+                          })
+                        }
+                      />
+                      <NumberField
+                        label="Fondo"
+                        value={itemDepth(item)}
+                        min={2}
+                        max={300}
+                        unit="mm"
+                        disabled={item.locked}
+                        onCommit={(v) => patchItem(item.id, { depth: v })}
                       />
                       <NumberField
                         label="Rotación"
@@ -1673,6 +1662,62 @@ export default function App() {
                     </p>
                   </div>
                 )}
+                {item && (
+                  <div
+                    className="layer-order-controls"
+                    aria-label="Orden de superposición"
+                  >
+                    <span>Orden en el plato</span>
+                    <button
+                      title="Traer al frente"
+                      onClick={() =>
+                        commit((p) =>
+                          reorderLayer(p, item.id, p.items.length - 1),
+                        )
+                      }
+                    >
+                      <ChevronsUp size={14} />
+                      Al frente
+                    </button>
+                    <button
+                      title="Enviar al fondo"
+                      onClick={() => commit((p) => reorderLayer(p, item.id, 0))}
+                    >
+                      <ChevronsDown size={14} />
+                      Al fondo
+                    </button>
+                    <button
+                      title="Subir una capa"
+                      onClick={() =>
+                        commit((p) =>
+                          reorderLayer(
+                            p,
+                            item.id,
+                            p.items.findIndex((i) => i.id === item.id) + 1,
+                          ),
+                        )
+                      }
+                    >
+                      <ArrowUp size={14} />
+                      Subir
+                    </button>
+                    <button
+                      title="Bajar una capa"
+                      onClick={() =>
+                        commit((p) =>
+                          reorderLayer(
+                            p,
+                            item.id,
+                            p.items.findIndex((i) => i.id === item.id) - 1,
+                          ),
+                        )
+                      }
+                    >
+                      <ArrowDown size={14} />
+                      Bajar
+                    </button>
+                  </div>
+                )}
                 <section className="layers">
                   <div className="panel-title">
                     <h2>Capas</h2>
@@ -1703,13 +1748,11 @@ export default function App() {
                             );
                             if (id && id !== i.id)
                               commit((p) => {
-                                const items = [...p.items],
-                                  from = items.findIndex((t) => t.id === id),
-                                  to = items.findIndex((t) => t.id === i.id);
-                                if (from < 0 || to < 0) return p;
-                                const [v] = items.splice(from, 1);
-                                items.splice(to, 0, v);
-                                return { ...p, items };
+                                return reorderLayer(
+                                  p,
+                                  id,
+                                  p.items.findIndex((t) => t.id === i.id),
+                                );
                               });
                           }}
                         >
@@ -1748,8 +1791,8 @@ export default function App() {
                         </div>
                       ))}
                       <p className="layer-note">
-                        Arrastra para organizar la lista. La elevación controla
-                        la posición en altura.
+                        La capa superior se coloca por encima de las que se
+                        solapan. Arrastra para cambiar el orden.
                       </p>
                     </>
                   )}
@@ -2141,6 +2184,9 @@ export default function App() {
               </h3>
               <div className={format === "pdf" ? "pdf-sheet" : "png-sheet"}>
                 {format === "pdf" && <h4>{project.name}</h4>}
+                {!paintReady && (
+                  <p role="status">Preparando los materiales ilustrados…</p>
+                )}
                 {preview && (
                   <img
                     src={preview}

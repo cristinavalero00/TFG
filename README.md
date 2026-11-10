@@ -51,11 +51,11 @@ Admite `MISE_URL` y `CHROMIUM_PATH`. Los resultados y capturas se generan en `te
 - Cuatro vajillas: redonda, honda, rectangular y pizarra; color configurable.
 - Biblioteca inicial de 17 ingredientes, guarniciones, decoración, salsas y formas. Formas tridimensionales procedurales con acabado ilustrado.
 - Añadir por clic o arrastre. Selección sincronizada entre lienzo, inspector y capas.
-- Mover, rotar, escalar, reflejar, duplicar y eliminar elementos. Ancho, grosor, color principal, opacidad y elevación editables.
+- Mover, rotar, escalar, reflejar, duplicar y eliminar elementos. Ancho y fondo independientes, grosor, color principal, opacidad y elevación editables. Ocho tiradores: esquinas proporcionales y lados independientes; Mayús permite proporción libre.
 - Modos de transformación con gizmos en cenital y campos numéricos en ambas vistas.
-- Ocultar, bloquear y organizar la lista de capas. Su orden no sustituye a la elevación 3D.
+- Ocultar, bloquear y organizar la lista de capas. Al reordenarlas cambia la superposición de los elementos que se solapan, mediante apilado geométrico. También hay controles para subir, bajar, traer al frente y enviar al fondo. La elevación manual se conserva como separación adicional.
 - Cámara cenital y oblicua sobre la misma escena. Giro, inclinación, zoom, encuadre y restablecimiento de vista.
-- Ocho guías de composición y consulta contextual de teoría del color.
+- Ocho guías de composición y consulta contextual de teoría del color. La paleta del plato se calcula a partir de los materiales principales de los elementos visibles, con análogos y complementarios según el color elegido. No analiza píxeles de texturas ni iluminación.
 - Deshacer/rehacer hasta 100 acciones. Un arrastre equivale a una acción.
 - Guardado manual en el navegador, advertencia al salir y estados reales de error.
 - Exportación PNG a 1000 × 1000 px y ficha PDF A4 con listado de elementos visibles y notas; paginación de notas largas.
@@ -89,4 +89,13 @@ La aplicación y las pruebas de integración se verifican en Chromium. No se afi
 
 ## Licencias de dependencias
 
-React, Three.js, Vite, jsPDF y Lucide se distribuyen con sus respectivas licencias de código abierto. DM Serif Display y Public Sans se incluyen a través de Fontsource; conserva los archivos de licencia de esos paquetes al redistribuir sus fuentes. Los modelos e ilustraciones del producto se generan en el código del proyecto; no se han copiado fotografías de las referencias visuales.
+React, Three.js, Vite, jsPDF y Lucide se distribuyen con sus respectivas licencias de código abierto. DM Serif Display y Public Sans se incluyen a través de Fontsource; conserva los archivos de licencia de esos paquetes al redistribuir sus fuentes. Los volúmenes y las miniaturas se construyen en el código del proyecto. Un atlas original de materiales ilustrados, generado con OpenAI ImageGen para esta aplicación, se utiliza en las superficies y las miniaturas. No se han copiado las imágenes de referencia aportadas por la usuaria.
+
+## Cambios de la versión 1.1
+
+- Ocho tiradores sobre el marco de la selección. El anclaje opuesto se conserva al estirar y una operación se puede cancelar con Escape.
+- Campo Fondo independiente. Los proyectos antiguos sin este dato siguen abriéndose; no se cambia la clave de almacenamiento.
+- Orden real de superposición mediante apilado de los elementos que se solapan. Los proyectos anteriores mantienen su disposición hasta utilizar los controles de orden.
+- Análisis cromático local de los colores principales de ingredientes visibles. Las sugerencias no se aplican automáticamente.
+- Materiales ilustrados con mayor detalle, aplicados a los volúmenes y a las miniaturas.
+- Pruebas adicionales: `node --import tsx tests/interactions.test.ts` y `python tests/corrections.py`.

@@ -1,0 +1,5 @@
+Mise en Place · Materiales ilustrados
+
+public/art/food-materials.png es un atlas original generado mediante OpenAI ImageGen para este proyecto, a partir de instrucciones sobre texturas gastronómicas con acabado pictórico. No es una reproducción de las imágenes de referencia aportadas por la usuaria ni una fotografía de alimentos reales.
+
+El atlas tiene doce regiones utilizadas por el código como materiales de modelos tridimensionales y rellenos de miniaturas. Las geometrías y la aplicación de materiales se implementan en src/Scene.tsx, src/painted.ts y src/Illustration.tsx.

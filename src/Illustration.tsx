@@ -1,3 +1,4 @@
+import { useId } from "react";
 export function Food({
   kind,
   color,
@@ -7,6 +8,83 @@ export function Food({
   color?: string;
   size?: number;
 }) {
+  const id = useId().replace(/:/g, "");
+  const paintedKinds = [
+    "zucchini",
+    "carrot",
+    "broccoli",
+    "sprout",
+    "tomato",
+    "asparagus",
+    "salmon",
+    "protein",
+    "scallop",
+    "mushroom",
+    "quenelle",
+    "flower",
+  ];
+  const tile = paintedKinds.indexOf(kind);
+  const shapes: Record<string, string> = {
+    zucchini: "M50 11A39 39 0 1 1 49.9 11Z",
+    carrot:
+      "M16 42Q9 28 23 25L76 25Q91 28 86 44L81 63Q78 72 67 72L24 72Q10 71 13 57Z",
+    broccoli:
+      "M36 80L40 65Q16 67 14 51Q12 36 28 34Q25 16 43 15Q58 8 66 25Q85 20 88 41Q97 60 72 66L59 66L64 82Z",
+    sprout:
+      "M45 87L49 49Q20 65 13 38Q40 25 48 48L46 22Q69 8 80 22Q76 41 51 44L52 60Q76 40 89 57Q86 78 55 69L53 88Z",
+    tomato: "M50 13Q83 11 89 43Q97 83 60 89Q18 95 12 61Q6 22 50 13Z",
+    asparagus:
+      "M12 25L78 25L91 31L78 38L12 38Z M12 45L78 45L91 51L78 58L12 58Z M12 65L78 65L91 71L78 78L12 78Z",
+    salmon: "M17 28Q30 15 62 18L85 27L88 64Q84 80 64 83L19 75Q10 57 17 28Z",
+    protein: "M15 32Q28 12 60 18Q89 20 89 52Q93 82 63 86L29 80Q5 68 15 32Z",
+    scallop: "M50 13Q84 10 88 44Q94 77 62 88Q27 94 14 65Q5 30 32 17Z",
+    mushroom:
+      "M40 84L42 55Q12 62 12 47Q18 11 53 14Q85 14 89 48Q86 60 59 55L63 84Z",
+    quenelle: "M10 62Q21 26 68 25Q94 25 89 45Q73 77 34 79Q12 79 10 62Z",
+    flower:
+      "M50 41Q24 0 20 27Q-1 45 37 50Q-1 69 27 81Q44 98 50 61Q70 99 82 72Q99 52 62 50Q102 25 72 18Q57 1 50 41Z",
+  };
+  if (tile >= 0)
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 100 100"
+        aria-hidden="true"
+        className="food-illustration painted-food"
+      >
+        <defs>
+          <clipPath id={id}>
+            <path d={shapes[kind]} />
+          </clipPath>
+        </defs>
+        <g transform={kind === "carrot" ? "rotate(-20 50 50)" : undefined}>
+          <path d={shapes[kind]} fill="#f0e3c8" />
+          <image
+            href="/art/food-materials.png"
+            x={10 - (tile % 3) * 80}
+            y={10 - Math.floor(tile / 3) * 80}
+            width="240"
+            height="320"
+            preserveAspectRatio="none"
+            clipPath={`url(#${id})`}
+          />
+          <path
+            d={shapes[kind]}
+            fill="none"
+            stroke="#645139"
+            strokeOpacity=".18"
+            strokeWidth=".65"
+          />
+        </g>
+        {kind === "tomato" && (
+          <path
+            d="m50 11 4 10 13-3-7 10 6 8-15-6-13 7 5-12-12-4 14-2Z"
+            fill="#526a38"
+          />
+        )}
+      </svg>
+    );
   const c = color || "#668943";
   return (
     <svg
