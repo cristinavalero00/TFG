@@ -1,0 +1,21 @@
+MISE EN PLACE
+Diseña tus emplatados.
+
+1. Instala Node.js LTS (22.12 o posterior) desde https://nodejs.org si no lo tienes.
+2. Descomprime toda esta carpeta.
+3. En Windows, abre "Iniciar Mise en Place.bat".
+   En macOS, abre "Iniciar Mise en Place.command" o usa Terminal.
+   También puedes abrir una terminal en esta carpeta y ejecutar:
+
+   node iniciar.mjs
+
+4. Abre en el navegador la dirección que indique la terminal.
+5. Mantén la terminal abierta mientras utilizas la aplicación.
+
+El paquete incluye la aplicación compilada en dist/. No necesitas ejecutar npm install para utilizar esta versión.
+
+Para modificar el código, consulta README.md. Se incluyen el código fuente y el archivo de dependencias reproducibles.
+
+Los proyectos se guardan manualmente en el mismo navegador y dirección. Descarga copias editables para conservarlos o trasladarlos. Borrar datos del navegador puede eliminar los proyectos. Los PDF y PNG no sustituyen al proyecto editable.
+
+La aplicación requiere un navegador con WebGL. Está orientada a ordenador. No es un instalador nativo.
