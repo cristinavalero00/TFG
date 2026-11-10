@@ -381,3 +381,11 @@ export function fileName(s: string) {
       .slice(0, 80) || "emplatado"
   );
 }
+
+export const sauceTiles: Record<string, number> = {
+  dot: 0,
+  stroke: 1,
+  base: 2,
+  line: 3,
+  circle: 0,
+};

@@ -99,3 +99,7 @@ React, Three.js, Vite, jsPDF y Lucide se distribuyen con sus respectivas licenci
 - Análisis cromático local de los colores principales de ingredientes visibles. Las sugerencias no se aplican automáticamente.
 - Materiales ilustrados con mayor detalle, aplicados a los volúmenes y a las miniaturas.
 - Pruebas adicionales: `node --import tsx tests/interactions.test.ts` y `python tests/corrections.py`.
+
+## Cambios de la versión 1.1.1
+
+Las salsas y formas utilizan un segundo atlas original de texturas ilustradas, generado con OpenAI ImageGen. Sus materiales neutros se tiñen con el color elegido por la persona usuaria. Puntos, trazos, bases, líneas y círculos presentan variaciones de pigmento y contornos suavemente irregulares. La biblioteca, la escena y la exportación mantienen este acabado. Comprobación específica: `python tests/sauces.py`.

@@ -51,3 +51,7 @@ El nuevo atlas de materiales es un recurso original generado con OpenAI ImageGen
 La compatibilidad con datos anteriores se mantiene mediante campos opcionales y la misma clave de almacenamiento. Se verifican los datos antiguos sin fondo explícito ni modo de apilado.
 
 Comprobación de la versión 1.1: 14 pruebas de datos e interacción geométrica superadas. Los recorridos de navegador verifican además los ocho tiradores, el ajuste de fondo en salsas, el anclaje de objetos girados, la cancelación con Escape, el cambio visible de superposición por botones y arrastre, las armonías actualizadas al cambiar de color y la apertura de proyectos anteriores. La compilación y los recorridos completos de guardado y exportación también se han ejecutado sobre la versión compilada, sin errores JavaScript.
+
+## Acabado de las salsas (1.1.1)
+
+El atlas `public/art/sauce-materials.png` contiene cuatro materiales originales en escala de grises: coulis, pincelada, crema y línea de salsa. Se aplica el color editable mediante multiplicación en la escena y transferencia de canales en las miniaturas. Las coordenadas de textura se proyectan sobre el plano del plato para conservar la lectura de las pinceladas. La geometría presenta pequeñas variaciones deterministas en el contorno y mantiene el ancho y el fondo configurables. Las capturas PNG y PDF utilizan los mismos materiales que la escena.

@@ -64,6 +64,31 @@ function sphere(
   a.scale.set(sx, sy, sz);
   return a;
 }
+// Planar UVs keep painted sauce marks legible from above and in perspective.
+function sauceShape(
+  parent: T.Group,
+  m: T.Material,
+  sx: number,
+  sz: number,
+  brush = false,
+) {
+  const geometry = new T.SphereGeometry(1, 64, 24);
+  const positions = geometry.attributes.position;
+  const uv = geometry.attributes.uv;
+  for (let n = 0; n < positions.count; n++) {
+    const x = positions.getX(n),
+      y = positions.getY(n),
+      z = positions.getZ(n);
+    const angle = Math.atan2(z, x);
+    const edge = 1 + 0.025 * Math.sin(angle * 5) + 0.016 * Math.cos(angle * 9);
+    const taper = brush ? 1 - 0.32 * x : 1;
+    positions.setXYZ(n, x * edge, y, z * edge * taper);
+    uv.setXY(n, 0.5 + x * 0.46, 0.5 + z * 0.46);
+  }
+  geometry.computeVertexNormals();
+  const object = mesh(geometry, m, parent, 0, 1, 0);
+  object.scale.set(sx, 1.2, sz);
+}
 function cylinder(
   parent: T.Group,
   m: T.Material,
@@ -240,17 +265,19 @@ function food(i: Item, elevation = i.elevation) {
       sphere(g, material("#deb94c"), 0, 4, 0, 4, 2, 4);
       break;
     case "dot":
-      sphere(g, main, 0, 1.5, 0, 9, 2, 9);
+      sauceShape(g, main, 9, 9);
       break;
     case "stroke":
-      sphere(g, main, -3, 1, 0, 25, 1.2, 8);
-      sphere(g, main, 16, 1, 0, 14, 1, 5);
+      sauceShape(g, main, 30, 8, true);
       break;
     case "base":
-      sphere(g, main, 0, 1, 0, 25, 1.2, 19);
+      sauceShape(g, main, 25, 19);
       break;
     case "line":
-      mesh(new RoundedBoxGeometry(44, 1.2, 2.5, 2, 1), main, g, 0, 0.6, 0);
+      sauceShape(g, main, 22, 1.25);
+      break;
+    case "circle":
+      sauceShape(g, main, 20, 20);
       break;
     default:
       cylinder(g, main, 20, 3);

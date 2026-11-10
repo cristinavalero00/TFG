@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { sauceTiles } from "./model";
 export function Food({
   kind,
   color,
@@ -85,6 +86,57 @@ export function Food({
         )}
       </svg>
     );
+  if (kind in sauceTiles) {
+    const tint =
+      color ||
+      (kind === "base" ? "#8b9c52" : kind === "circle" ? "#d9ba6d" : "#b65536");
+    const rgb = [1, 3, 5].map(
+      (start) => parseInt(tint.slice(start, start + 2), 16) / 255,
+    );
+    const shape =
+      kind === "stroke"
+        ? "M10 47Q17 29 44 35L89 45L79 51L89 55L59 64Q19 70 10 53Z"
+        : kind === "line"
+          ? "M10 46Q35 42 60 46L91 48L88 54Q56 51 35 54L10 53Z"
+          : kind === "base"
+            ? "M12 49Q9 28 36 20Q61 11 81 30Q96 43 85 65Q76 86 47 82Q16 84 12 49Z"
+            : "M51 13Q77 11 86 36Q96 61 76 79Q56 95 31 82Q9 72 12 47Q10 20 38 15Z";
+    const tile = sauceTiles[kind];
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 100 100"
+        aria-hidden="true"
+        className="food-illustration painted-sauce"
+      >
+        <defs>
+          <clipPath id={id}>
+            <path d={shape} />
+          </clipPath>
+          <filter id={`${id}-tint`} colorInterpolationFilters="sRGB">
+            <feComponentTransfer>
+              <feFuncR type="linear" slope={rgb[0]} />
+              <feFuncG type="linear" slope={rgb[1]} />
+              <feFuncB type="linear" slope={rgb[2]} />
+            </feComponentTransfer>
+          </filter>
+        </defs>
+        <path d={shape} fill={tint} />
+        <g clipPath={`url(#${id})`}>
+          <image
+            href="/art/sauce-materials.png"
+            x={10 - (tile % 2) * 80}
+            y={10 - Math.floor(tile / 2) * 80}
+            width="160"
+            height="160"
+            preserveAspectRatio="none"
+            filter={`url(#${id}-tint)`}
+          />
+        </g>
+      </svg>
+    );
+  }
   const c = color || "#668943";
   return (
     <svg
